@@ -89,7 +89,6 @@ func (c *converter) convertProfile(p *cover.Profile) error {
 			}
 
 			s.Reached += int64(b.Count)
-			s.Count += int64(b.Count)
 
 			stmts = stmts[1:]
 			break
@@ -98,31 +97,31 @@ func (c *converter) convertProfile(p *cover.Profile) error {
 
 	// Loop on each statement and determine coverage and TLOC by function
 	for _, fn := range pkg.Functions {
-		var count int64
+		var reached int64
 		for _, stmt := range fn.Statements {
-			if stmt.Count > 0 {
-				count++
+			if stmt.Reached > 0 {
+				reached++
 			}
 		}
 
-		fn.TLOC = count
-		fn.Coverage = 100.0 * float64(count) / float64(len(fn.Statements))
+		fn.TLOC = reached
+		fn.Coverage = 100.0 * float64(reached) / float64(len(fn.Statements))
 	}
 
 	// Loop on each package and determine coverage and TLOC by package
 	var totalStmts int
-	var totalCount int64
+	var totalReached int64
 	for _, fn := range pkg.Functions {
 		totalStmts += len(fn.Statements)
 		for _, stmt := range fn.Statements {
-			if stmt.Count > 0 {
-				totalCount++
+			if stmt.Reached > 0 {
+				totalReached++
 			}
 		}
 	}
 
-	pkg.TLOC = totalCount
-	pkg.Coverage = 100.0 * float64(totalCount) / float64(totalStmts)
+	pkg.TLOC = totalReached
+	pkg.Coverage = 100.0 * float64(totalReached) / float64(totalStmts)
 
 	return nil
 }

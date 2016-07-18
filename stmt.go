@@ -18,8 +18,6 @@ type Statement struct {
 	End int
 	// Reached is the number of times the statement was reached.
 	Reached int64
-
-	Count int64
 }
 
 // wrapper for Statement
