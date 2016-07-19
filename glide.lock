@@ -1,5 +1,5 @@
 hash: 6021e60cd94d15d3e67878221134ed0e2ebdb9afedcf38b54191e6978bf6076a
-updated: 2016-07-18T19:06:31.193774143+02:00
+updated: 2016-07-19T13:58:48.278905191+02:00
 imports:
 - name: github.com/codegangsta/cli
   version: 11c134509d89c2018675f369955218a180dc7428
@@ -7,12 +7,16 @@ imports:
   version: 8b1c59eae986013d3be5deddbf1e89f18d25ffaa
 - name: github.com/Sirupsen/logrus
   version: a283a10442df8dc09befd873fab202bf8a253d6a
+- name: github.com/urfave/cli
+  version: 11c134509d89c2018675f369955218a180dc7428
 - name: golang.org/x/sys
   version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:
   - unix
 - name: golang.org/x/tools
-  version: f2932db7c0155d2ea19373270a3fa937349ac375
+  version: edf8e6fef861d8c5ecc9e394b0146d6ebba57795
   subpackages:
   - cover
-devImports: []
+testImports:
+- name: github.com/ahmetalpbalkan/go-linq
+  version: 0cb9dbba80d7b5a7366a7d9d2214961d1de6cc09

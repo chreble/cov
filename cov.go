@@ -23,25 +23,33 @@ type Report struct {
 
 // ConvertProfile converts a given profile to a Report struct
 func ConvertProfile(filename string) (report *Report, e error) {
-	r := &Report{}
-
-	conv := converter{
-		packages: make(map[string]*Package),
-	}
 	profiles, err := cover.ParseProfiles(filename)
 	if err != nil {
 		return nil, err
+	}
+
+	r := &Report{}
+	return r.parseProfile(profiles)
+}
+
+func (r *Report) parseProfile(profiles []*cover.Profile) (report *Report, e error) {
+	conv := converter{
+		packages: make(map[string]*Package),
 	}
 	for _, p := range profiles {
 		if err := conv.convertProfile(p); err != nil {
 			return nil, err
 		}
 	}
-
 	for _, pkg := range conv.packages {
 		r.addPackage(pkg)
 	}
+	r.computeGlobalCoverage()
 
+	return r, nil
+}
+
+func (r *Report) computeGlobalCoverage() {
 	// Loop on each package and determine coverage and TLOC by package
 	var gcov float64
 	var tloc int64
@@ -55,8 +63,6 @@ func ConvertProfile(filename string) (report *Report, e error) {
 	if gcov > 0 {
 		r.Coverage = gcov / float64(len(r.Packages))
 	}
-
-	return r, nil
 }
 
 // AddPackage adds a package coverage information

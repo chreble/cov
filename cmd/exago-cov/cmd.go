@@ -11,7 +11,7 @@ import (
 	"os"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 
 	. "github.com/exago/cov/config"
 	"github.com/exago/cov"

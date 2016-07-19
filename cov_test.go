@@ -6,8 +6,10 @@
 package cov
 
 import (
+	"os"
 	"testing"
 
+	. "github.com/ahmetalpbalkan/go-linq"
 	"golang.org/x/tools/cover"
 )
 
@@ -37,29 +39,117 @@ var profile = &cover.Profile{
 	},
 }
 
-func registerPackage(name string) *Package {
-	return &Package{Name: name}
+var mock = struct {
+	Coverage float64
+	TLOC     int64
+	Pkg      Package
+}{
+	Coverage: 20,
+	TLOC:     5,
+	Pkg: Package{
+		Name:     "github.com/chreble/todo/task",
+		Coverage: 20,
+		TLOC:     5,
+		Functions: []*Function{
+			&Function{"Tasks.All", "$GOPATH/github.com/chreble/todo/task/task.go", 18, 24, 0, 0, nil},
+			&Function{"Tasks.Create", "$GOPATH/github.com/chreble/todo/task/task.go", 35, 39, 100, 3, nil},
+			&Function{"newID", "$GOPATH/github.com/chreble/todo/task/task.go", 68, 71, 100, 2, nil},
+		},
+	},
 }
 
-func registerFunction(p *Package, name, file string, startOffset, endOffset int) *Function {
-	f := &Function{Name: name, File: file, Start: startOffset, End: endOffset}
-	p.Functions = append(p.Functions, f)
-	return f
+var report *Report
+
+func TestMain(m *testing.M) {
+	report = &Report{}
+	report.parseProfile([]*cover.Profile{profile})
+
+	os.Exit(m.Run())
 }
 
-func registerStatement(f *Function, startOffset, endOffset int) *Statement {
-	s := &Statement{Start: startOffset, End: endOffset}
-	f.Statements = append(f.Statements, s)
-	return s
+func TestGlobal(t *testing.T) {
+	// Check global coverage
+	if report.Coverage != mock.Coverage {
+		t.Errorf(
+			"Got wrong global coverage expected %.2f computed %.2f",
+			mock.Coverage,
+			report.Coverage,
+		)
+	}
+	// Check global TLOC
+	if report.TLOC != mock.TLOC {
+		t.Errorf(
+			"Got wrong global coverage expected %.2f computed %.2f",
+			mock.Coverage,
+			report.Coverage,
+		)
+	}
 }
 
-func TestConvertProfile(t *testing.T) {
-	conv := converter{
-		packages: make(map[string]*Package),
+func TestPackage(t *testing.T) {
+	// Check Package with a predicate function
+	_, err := From(report.Packages).Single(func(p T) (bool, error) {
+		return p.(*Package).Name == mock.Pkg.Name &&
+			p.(*Package).Coverage == mock.Pkg.Coverage &&
+			p.(*Package).TLOC == mock.Pkg.TLOC, nil
+	})
+	if err != nil {
+		pkg, err := From(report.Packages).Single(func(p T) (bool, error) {
+			return true, nil
+		})
+		// Exit, because there's nothing we can't do!
+		if err != nil {
+			t.Error(err)
+		}
+		// Return information about error
+		t.Errorf(
+			`Got error on package assertion:
+				* Got %s name and expected %s
+				* Got %.2f coverage and expected %.2f
+				* Got %d TLOC and expected %d
+			`,
+			pkg.(*Package).Name, mock.Pkg.Name,
+			pkg.(*Package).Coverage, mock.Pkg.Coverage,
+			pkg.(*Package).TLOC, mock.Pkg.TLOC,
+		)
+	}
+}
+
+func TestFunctions(t *testing.T) {
+	// Check Functions
+	pkg, err := From(report.Packages).Single(func(p T) (bool, error) {
+		return p.(*Package).Name == mock.Pkg.Name, nil
+	})
+	if err != nil {
+		t.Error(err)
 	}
 
-	if err := conv.convertProfile(profile); err != nil {
-		t.Error(err)
+	for _, fn := range pkg.(*Package).Functions {
+		// Find function
+		mfn, _ := From(mock.Pkg.Functions).Single(func(f T) (bool, error) {
+			return f.(*Function).Name == fn.Name, nil
+		})
+		// Ignore un-mocked functions
+		if mfn == nil {
+			continue
+		}
+		f := mfn.(*Function)
+		if f.Coverage != fn.Coverage {
+			t.Errorf(
+				"Got %.2f coverage and expected %.2f for Function %s",
+				fn.Coverage,
+				f.Coverage,
+				fn.Name,
+			)
+		}
+		if f.TLOC != fn.TLOC {
+			t.Errorf(
+				"Got %.2f TLOC and expected %.2f for Function %s",
+				fn.TLOC,
+				f.TLOC,
+				fn.Name,
+			)
+		}
 	}
 }
 
@@ -160,4 +250,20 @@ func TestAccumulateStatement(t *testing.T) {
 	if err := s1_1.Accumulate(s2); err == nil {
 		t.Errorf("Expected an error")
 	}
+}
+
+func registerPackage(name string) *Package {
+	return &Package{Name: name}
+}
+
+func registerFunction(p *Package, name, file string, startOffset, endOffset int) *Function {
+	f := &Function{Name: name, File: file, Start: startOffset, End: endOffset}
+	p.Functions = append(p.Functions, f)
+	return f
+}
+
+func registerStatement(f *Function, startOffset, endOffset int) *Statement {
+	s := &Statement{Start: startOffset, End: endOffset}
+	f.Statements = append(f.Statements, s)
+	return s
 }
