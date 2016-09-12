@@ -7,7 +7,7 @@ package config
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/exago/envconfig"
+	"github.com/kelseyhightower/envconfig"
 )
 
 // Config holds the configuration object

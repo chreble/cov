@@ -13,8 +13,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 
-	. "github.com/exago/cov/config"
-	"github.com/exago/cov"
+	"github.com/hotolab/cov"
+	. "github.com/hotolab/cov/config"
 )
 
 var (

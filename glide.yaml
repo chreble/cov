@@ -1,8 +1,14 @@
-package: github.com/exago/cov
+package: github.com/hotolab/cov
 import:
 - package: github.com/Sirupsen/logrus
-- package: github.com/codegangsta/cli
-- package: github.com/exago/envconfig
+  version: ^0.10.0
+- package: github.com/kelseyhightower/envconfig
+  version: ^1.1.0
+- package: github.com/urfave/cli
+  version: ^1.18.1
 - package: golang.org/x/tools
   subpackages:
   - cover
+testImport:
+- package: github.com/ahmetalpbalkan/go-linq
+  version: ^2.0.0-rc0

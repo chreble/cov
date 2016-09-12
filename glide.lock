@@ -1,22 +1,20 @@
-hash: 6021e60cd94d15d3e67878221134ed0e2ebdb9afedcf38b54191e6978bf6076a
-updated: 2016-07-19T13:58:48.278905191+02:00
+hash: 464ae3230ac51d983830ee2bf0c9983e1b27f83032d5d36cbd48e2061588aa7e
+updated: 2016-09-12T11:51:57.879611511+02:00
 imports:
-- name: github.com/codegangsta/cli
-  version: 11c134509d89c2018675f369955218a180dc7428
-- name: github.com/exago/envconfig
-  version: 8b1c59eae986013d3be5deddbf1e89f18d25ffaa
+- name: github.com/kelseyhightower/envconfig
+  version: ac12b1f15efba734211a556d8b125110dc538016
 - name: github.com/Sirupsen/logrus
-  version: a283a10442df8dc09befd873fab202bf8a253d6a
+  version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
 - name: github.com/urfave/cli
-  version: 11c134509d89c2018675f369955218a180dc7428
+  version: a14d7d367bc02b1f57d88de97926727f2d936387
 - name: golang.org/x/sys
-  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
+  version: 30de6d19a3bd89a5f38ae4028e23aaa5582648af
   subpackages:
   - unix
 - name: golang.org/x/tools
-  version: edf8e6fef861d8c5ecc9e394b0146d6ebba57795
+  version: 86ad1193da6aba71355e71191641b9cfb26daa67
   subpackages:
   - cover
 testImports:
 - name: github.com/ahmetalpbalkan/go-linq
-  version: 0cb9dbba80d7b5a7366a7d9d2214961d1de6cc09
+  version: 1a980eac023b2b85839f21720ee8564d40f3d064
