@@ -15,19 +15,19 @@ import (
 type Function struct {
 	// Name is the name of the function. If the function has a receiver, the
 	// name will be of the form T.N, where T is the type and N is the name.
-	Name string
+	Name string `json:"name"`
 	// File is the full path to the file in which the function is defined.
-	File string
+	File string `json:"file"`
 	// Start is the start offset of the function's signature.
-	Start int
+	Start int `json:"start"`
 	// End is the end offset of the function.
-	End int
+	End int `json:"end"`
 	// Coverage
-	Coverage float64
+	Coverage float64 `json:"coverage"`
 	// TLOC
-	TLOC int64
-	// Statements registered with this function.
-	Statements []*Statement
+	TLOC int64 `json:"tloc"`
+	// Statements registered with this function, JSON output omit statements (for now)
+	Statements []*Statement `json:"-"`
 }
 
 // FuncExtent describes a function's extent in the source by file and position.

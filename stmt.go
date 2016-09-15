@@ -13,11 +13,11 @@ import (
 
 type Statement struct {
 	// Start is the start offset of the statement.
-	Start int
+	Start int `json:"start"`
 	// End is the end offset of the statement.
-	End int
+	End int `json:"end"`
 	// Reached is the number of times the statement was reached.
-	Reached int64
+	Reached int64 `json:"-"`
 }
 
 // wrapper for Statement

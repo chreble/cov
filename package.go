@@ -10,13 +10,13 @@ import "fmt"
 // Package describes a package inner characteristics
 type Package struct {
 	// Name is the canonical path of the package.
-	Name string
+	Name string `json:"name"`
 	// Coverage
-	Coverage float64
+	Coverage float64 `json:"coverage"`
 	// TLOC is the number of lines of code which are tested (LOC)
-	TLOC int64
+	TLOC int64 `json:"tloc"`
 	// Functions is a list of functions registered with this package.
-	Functions []*Function
+	Functions []*Function `json:"functions"`
 }
 
 // Accumulate will accumulate the coverage information from the provided

@@ -14,11 +14,11 @@ import (
 // Report contains information about tested packages, functions and statements
 type Report struct {
 	// Packages holds all tested packages
-	Packages []*Package
+	Packages []*Package `json:"packages"`
 	// TLOC contains the sum of all TLOCs
-	TLOC int64
+	TLOC int64 `json:"tloc"`
 	// Coverage is the global test coverage percentage
-	Coverage float64
+	Coverage float64 `json:"coverage"`
 }
 
 // ConvertProfile converts a given profile to a Report struct
