@@ -16,7 +16,7 @@ type Package struct {
 	// TLOC is the number of lines of code which are tested (LOC)
 	TLOC int64 `json:"tloc"`
 	// Functions is a list of functions registered with this package.
-	Functions []*Function `json:"functions"`
+	Functions []*Function `json:"-"`
 }
 
 // Accumulate will accumulate the coverage information from the provided
