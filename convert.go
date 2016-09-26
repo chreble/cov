@@ -132,7 +132,7 @@ func (c *converter) findFile(file string) (pkgname string, filename string, pkgp
 	if dir != "" {
 		dir = dir[:len(dir)-1] // drop trailing '/'
 	}
-	pkg, err := build.Import(dir, ".", build.FindOnly)
+	pkg, err := build.Import(dir, ".", build.IgnoreVendor)
 	if err != nil {
 		return "", "", "", "", fmt.Errorf("can't find %q: %v", file, err)
 	}
