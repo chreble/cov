@@ -9,8 +9,10 @@ import "fmt"
 
 // Package describes a package inner characteristics
 type Package struct {
-	// Name is the canonical path of the package.
+	// Name is the package name
 	Name string `json:"name"`
+	// Path is the canonical path of the package.
+	Path string `json:"path"`
 	// Coverage
 	Coverage float64 `json:"coverage"`
 	// TLOC is the number of lines of code which are tested (LOC)

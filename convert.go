@@ -34,14 +34,14 @@ type extent struct {
 // convertProfile converts a Go coverage profile into an intelligent
 // structure containing the percent of coverage, TLOCs, etc...
 func (c *converter) convertProfile(p *cover.Profile) error {
-	file, pkgpath, abspath, err := c.findFile(p.FileName)
+	name, file, pkgpath, abspath, err := c.findFile(p.FileName)
 	if err != nil {
 		return err
 	}
-	pkg := c.packages[pkgpath]
+	pkg := c.packages[name]
 	if pkg == nil {
-		pkg = &Package{Name: pkgpath}
-		c.packages[pkgpath] = pkg
+		pkg = &Package{Name: name, Path: pkgpath}
+		c.packages[name] = pkg
 	}
 	// Find function and statement extents; create corresponding
 	// cov.Functions and cov.Statements, and keep a separate
@@ -127,19 +127,18 @@ func (c *converter) convertProfile(p *cover.Profile) error {
 }
 
 // findFile finds the location of the named file in GOROOT, GOPATH etc.
-func (c *converter) findFile(file string) (filename string, pkgpath string, abspath string, err error) {
+func (c *converter) findFile(file string) (pkgname string, filename string, pkgpath string, abspath string, err error) {
 	dir, file := filepath.Split(file)
 	if dir != "" {
 		dir = dir[:len(dir)-1] // drop trailing '/'
 	}
 	pkg, err := build.Import(dir, ".", build.FindOnly)
 	if err != nil {
-		return "", "", "", fmt.Errorf("can't find %q: %v", file, err)
+		return "", "", "", "", fmt.Errorf("can't find %q: %v", file, err)
 	}
 
 	dir = strings.Replace(filepath.Join(pkg.Dir, file), pkg.SrcRoot, "$GOPATH", 1)
-
-	return filepath.Join(pkg.Dir, file), strings.Replace(pkg.ImportPath, pkg.SrcRoot, "", 1), dir, nil
+	return pkg.Name, filepath.Join(pkg.Dir, file), strings.Replace(pkg.ImportPath, pkg.SrcRoot, "", 1), dir, nil
 }
 
 // findFuncs parses the file and returns a slice of FuncExtent descriptors.
