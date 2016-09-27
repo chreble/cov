@@ -14,7 +14,6 @@ import (
 var Config cfg
 
 type cfg struct {
-	Profile  string `envconfig:"PROFILE" required:"true"`
 	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
 }
 

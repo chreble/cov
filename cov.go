@@ -6,75 +6,48 @@
 package cov
 
 import (
-	"sort"
+	"os"
 
 	"golang.org/x/tools/cover"
 )
 
-// Report contains information about tested packages, functions and statements
-type Report struct {
-	// Packages holds all tested packages
-	Packages []*Package `json:"packages"`
-	// TLOC contains the sum of all TLOCs
-	TLOC int64 `json:"tloc"`
-	// Coverage is the global test coverage percentage
-	Coverage float64 `json:"coverage"`
+// ConvertRepository converts a given repository to a Report struct
+func ConvertRepository(repo string) (*Report, error) {
+	r := &Report{}
+	err := r.collectPackages()
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := createProfile()
+	if err != nil {
+		return nil, err
+	}
+	defer os.Remove(p.Name())
+
+	profiles, err := cover.ParseProfiles(p.Name())
+	if err != nil {
+		return nil, err
+	}
+
+	if err = r.parseProfile(profiles); err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
 
 // ConvertProfile converts a given profile to a Report struct
-func ConvertProfile(filename string) (report *Report, e error) {
+func ConvertProfile(filename string) (*Report, error) {
 	profiles, err := cover.ParseProfiles(filename)
 	if err != nil {
 		return nil, err
 	}
 
 	r := &Report{}
-	return r.parseProfile(profiles)
-}
-
-func (r *Report) parseProfile(profiles []*cover.Profile) (report *Report, e error) {
-	conv := converter{
-		packages: make(map[string]*Package),
+	if err = r.parseProfile(profiles); err != nil {
+		return nil, err
 	}
-	for _, p := range profiles {
-		if err := conv.convertProfile(p); err != nil {
-			return nil, err
-		}
-	}
-	for _, pkg := range conv.packages {
-		r.addPackage(pkg)
-	}
-	r.computeGlobalCoverage()
 
 	return r, nil
-}
-
-func (r *Report) computeGlobalCoverage() {
-	// Loop on each package and determine coverage and TLOC by package
-	var gcov float64
-	var tloc int64
-	for _, pkg := range r.Packages {
-		gcov += pkg.Coverage
-		tloc += pkg.TLOC
-	}
-
-	// Report the global # of tested LOCs
-	r.TLOC = tloc
-	if gcov > 0 {
-		r.Coverage = gcov / float64(len(r.Packages))
-	}
-}
-
-// AddPackage adds a package coverage information
-func (r *Report) addPackage(p *Package) {
-	i := sort.Search(len(r.Packages), func(i int) bool {
-		return (r.Packages)[i].Name >= p.Name
-	})
-	if i < len(r.Packages) && (r.Packages)[i].Name == p.Name {
-		(r.Packages)[i].Accumulate(p)
-	} else {
-		head := (r.Packages)[:i]
-		tail := append([]*Package{p}, (r.Packages)[i:]...)
-		r.Packages = append(head, tail...)
-	}
 }

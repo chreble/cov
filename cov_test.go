@@ -41,15 +41,13 @@ var profile = &cover.Profile{
 
 var mock = struct {
 	Coverage float64
-	TLOC     int64
 	Pkg      Package
 }{
 	Coverage: 20,
-	TLOC:     5,
 	Pkg: Package{
-		Name:     "github.com/chreble/todo/task",
+		Name:     "task",
+		Path:     "github.com/chreble/todo/task",
 		Coverage: 20,
-		TLOC:     5,
 		Functions: []*Function{
 			&Function{"Tasks.All", "$GOPATH/github.com/chreble/todo/task/task.go", 18, 24, 0, 0, nil},
 			&Function{"Tasks.Create", "$GOPATH/github.com/chreble/todo/task/task.go", 35, 39, 100, 3, nil},
@@ -76,58 +74,41 @@ func TestGlobal(t *testing.T) {
 			report.Coverage,
 		)
 	}
-	// Check global TLOC
-	if report.TLOC != mock.TLOC {
-		t.Errorf(
-			"Got wrong global coverage expected %.2f computed %.2f",
-			mock.Coverage,
-			report.Coverage,
-		)
-	}
 }
 
 func TestPackage(t *testing.T) {
 	// Check Package with a predicate function
-	_, err := From(report.Packages).Single(func(p T) (bool, error) {
-		return p.(*Package).Name == mock.Pkg.Name &&
-			p.(*Package).Coverage == mock.Pkg.Coverage &&
-			p.(*Package).TLOC == mock.Pkg.TLOC, nil
-	})
-	if err != nil {
-		pkg, err := From(report.Packages).Single(func(p T) (bool, error) {
-			return true, nil
-		})
-		// Exit, because there's nothing we can't do!
-		if err != nil {
-			t.Error(err)
-		}
+	if _, ok := report.Packages[mock.Pkg.Name]; !ok {
+		t.Fatalf("Package %s not found in report", mock.Pkg.Name)
+	}
+	pkg := report.Packages[mock.Pkg.Name]
+	if pkg.Name != mock.Pkg.Name ||
+		pkg.Coverage != mock.Pkg.Coverage ||
+		pkg.Path != mock.Pkg.Path {
 		// Return information about error
 		t.Errorf(
 			`Got error on package assertion:
 				* Got %s name and expected %s
+				* Got %s path and expected %s
 				* Got %.2f coverage and expected %.2f
-				* Got %d TLOC and expected %d
 			`,
-			pkg.(*Package).Name, mock.Pkg.Name,
-			pkg.(*Package).Coverage, mock.Pkg.Coverage,
-			pkg.(*Package).TLOC, mock.Pkg.TLOC,
+			pkg.Name, mock.Pkg.Name,
+			pkg.Coverage, mock.Pkg.Coverage,
+			pkg.Path, mock.Pkg.Path,
 		)
 	}
 }
 
 func TestFunctions(t *testing.T) {
 	// Check Functions
-	pkg, err := From(report.Packages).Single(func(p T) (bool, error) {
-		return p.(*Package).Name == mock.Pkg.Name, nil
-	})
-	if err != nil {
-		t.Error(err)
+	if _, ok := report.Packages[mock.Pkg.Name]; !ok {
+		t.Fatalf("Package %s not found in report", mock.Pkg.Name)
 	}
-
-	for _, fn := range pkg.(*Package).Functions {
+	pkg := report.Packages[mock.Pkg.Name]
+	for _, fn := range pkg.Functions {
 		// Find function
-		mfn, _ := From(mock.Pkg.Functions).Single(func(f T) (bool, error) {
-			return f.(*Function).Name == fn.Name, nil
+		mfn := From(mock.Pkg.Functions).SingleWith(func(f interface{}) bool {
+			return f.(*Function).Name == fn.Name
 		})
 		// Ignore un-mocked functions
 		if mfn == nil {
@@ -141,51 +122,6 @@ func TestFunctions(t *testing.T) {
 				f.Coverage,
 				fn.Name,
 			)
-		}
-		if f.TLOC != fn.TLOC {
-			t.Errorf(
-				"Got %.2f TLOC and expected %.2f for Function %s",
-				fn.TLOC,
-				f.TLOC,
-				fn.Name,
-			)
-		}
-	}
-}
-
-func TestAccumulatePackage(t *testing.T) {
-	p1_1 := registerPackage("p1")
-	p1_2 := registerPackage("p1")
-	p2 := registerPackage("p2")
-	p3 := registerPackage("p1")
-	registerFunction(p3, "f", "file.go", 0, 1)
-	p4 := registerPackage("p1")
-	registerFunction(p4, "f", "file.go", 1, 2)
-
-	var tests = [...]struct {
-		a, b       *Package
-		expectPass bool
-	}{
-		// Should work: everything is the same.
-		{p1_1, p1_2, true},
-		// Should fail: name is different.
-		{p1_1, p2, false},
-		// Should fail: numbers of functions are different.
-		{p1_1, p3, false},
-		// Should fail: functions are different.
-		{p3, p4, false},
-	}
-
-	for _, test := range tests {
-		err := test.a.Accumulate(test.b)
-		if test.expectPass {
-			if err != nil {
-				t.Error(err)
-			}
-		} else {
-			if err == nil {
-				t.Error("Expected an error")
-			}
 		}
 	}
 }

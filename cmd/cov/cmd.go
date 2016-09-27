@@ -6,14 +6,11 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"os"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 
-	"github.com/hotolab/cov"
 	. "github.com/hotolab/cov/config"
 )
 
@@ -33,28 +30,26 @@ func init() {
 	// Version is injected at build-time
 	App.Version = ""
 
-	App.Action = func(c *cli.Context) {
-		r, err := cov.ConvertProfile(Config.Profile)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		bytes, err := json.Marshal(r)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Println(string(bytes))
-	}
-
 	InitializeConfig()
 	InitializeLogging(Config.LogLevel)
 }
 
 func main() {
+	AddCommands()
 	if err := App.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// AddCommands adds child commands to the root command Cmd.
+func AddCommands() {
+	AddCommand(ProfileCommand())
+	AddCommand(RepoCommand())
+}
+
+// AddCommand adds a child command.
+func AddCommand(cmd cli.Command) {
+	App.Commands = append(App.Commands, cmd)
 }
 
 // InitializeLogging sets logrus log level.
