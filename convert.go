@@ -32,7 +32,7 @@ type extent struct {
 }
 
 // convertProfile converts a Go coverage profile into an intelligent
-// structure containing the percent of coverage, TLOCs, etc...
+// structure containing the percent of coverage, etc...
 func (c *converter) convertProfile(p *cover.Profile) error {
 	name, file, pkgpath, abspath, err := c.findFile(p.FileName)
 	if err != nil {
@@ -96,31 +96,21 @@ func (c *converter) convertProfile(p *cover.Profile) error {
 	}
 
 	// Loop on each statement and determine coverage and TLOC by function
+	var totalStmts int
+	var totalReached int64
 	for _, fn := range pkg.Functions {
 		var reached int64
+		totalStmts += len(fn.Statements)
 		for _, stmt := range fn.Statements {
 			if stmt.Reached > 0 {
 				reached++
 			}
 		}
 
-		fn.TLOC = reached
+		totalReached += reached
 		fn.Coverage = 100.0 * float64(reached) / float64(len(fn.Statements))
 	}
 
-	// Loop on each package and determine coverage and TLOC by package
-	var totalStmts int
-	var totalReached int64
-	for _, fn := range pkg.Functions {
-		totalStmts += len(fn.Statements)
-		for _, stmt := range fn.Statements {
-			if stmt.Reached > 0 {
-				totalReached++
-			}
-		}
-	}
-
-	pkg.TLOC = totalReached
 	pkg.Coverage = 100.0 * float64(totalReached) / float64(totalStmts)
 
 	return nil
