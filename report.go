@@ -11,6 +11,7 @@ import (
 	"go/parser"
 	"go/token"
 	"os/exec"
+	"sort"
 	"strings"
 
 	"golang.org/x/tools/cover"
@@ -21,7 +22,7 @@ import (
 // Report contains information about tested packages, functions and statements
 type Report struct {
 	// Packages holds all tested packages
-	Packages map[string]*Package `json:"packages"`
+	Packages []*Package `json:"packages"`
 	// Coverage is the global test coverage percentage
 	Coverage float64 `json:"coverage"`
 }
@@ -35,14 +36,8 @@ func (r *Report) parseProfile(profiles []*cover.Profile) error {
 			return err
 		}
 	}
-
-	if len(r.Packages) > 0 {
-		for _, p := range conv.packages {
-			r.Packages[p.Name] = p
-		}
-
-	} else {
-		r.Packages = conv.packages
+	for _, pkg := range conv.packages {
+		r.addPackage(pkg)
 	}
 
 	r.computeGlobalCoverage()
@@ -65,7 +60,6 @@ func (r *Report) computeGlobalCoverage() {
 
 // collectPackages collects ALL packages
 func (r *Report) collectPackages() error {
-	r.Packages = make(map[string]*Package)
 	set := token.NewFileSet()
 	dirs, err := packageList("Dir")
 	if err != nil {
@@ -82,9 +76,9 @@ func (r *Report) collectPackages() error {
 		}
 		for _, pkg := range pkgs {
 			log.Debugf("package %v", pkg.Name)
-			r.Packages[pkg.Name] = &Package{
+			r.addPackage(&Package{
 				Name: pkg.Name,
-			}
+			})
 		}
 	}
 
@@ -93,6 +87,20 @@ func (r *Report) collectPackages() error {
 	}
 
 	return nil
+}
+
+// AddPackage adds a package coverage information
+func (r *Report) addPackage(p *Package) {
+	i := sort.Search(len(r.Packages), func(i int) bool {
+		return (r.Packages)[i].Name >= p.Name
+	})
+	if i < len(r.Packages) && (r.Packages)[i].Name == p.Name {
+		(r.Packages)[i].Accumulate(p)
+	} else {
+		head := (r.Packages)[:i]
+		tail := append([]*Package{p}, (r.Packages)[i:]...)
+		r.Packages = append(head, tail...)
+	}
 }
 
 // packageList returns a list of Go-like files or directories from PWD,

@@ -78,13 +78,15 @@ func TestGlobal(t *testing.T) {
 
 func TestPackage(t *testing.T) {
 	// Check Package with a predicate function
-	if _, ok := report.Packages[mock.Pkg.Name]; !ok {
+	pkg := From(report.Packages).SingleWith(func(p interface{}) bool {
+		return p.(*Package).Name == mock.Pkg.Name
+	})
+	if pkg == nil {
 		t.Fatalf("Package %s not found in report", mock.Pkg.Name)
 	}
-	pkg := report.Packages[mock.Pkg.Name]
-	if pkg.Name != mock.Pkg.Name ||
-		pkg.Coverage != mock.Pkg.Coverage ||
-		pkg.Path != mock.Pkg.Path {
+	if pkg.(*Package).Name != mock.Pkg.Name ||
+		pkg.(*Package).Coverage != mock.Pkg.Coverage ||
+		pkg.(*Package).Path != mock.Pkg.Path {
 		// Return information about error
 		t.Errorf(
 			`Got error on package assertion:
@@ -92,20 +94,22 @@ func TestPackage(t *testing.T) {
 				* Got %s path and expected %s
 				* Got %.2f coverage and expected %.2f
 			`,
-			pkg.Name, mock.Pkg.Name,
-			pkg.Coverage, mock.Pkg.Coverage,
-			pkg.Path, mock.Pkg.Path,
+			pkg.(*Package).Name, mock.Pkg.Name,
+			pkg.(*Package).Coverage, mock.Pkg.Coverage,
+			pkg.(*Package).Path, mock.Pkg.Path,
 		)
 	}
 }
 
 func TestFunctions(t *testing.T) {
 	// Check Functions
-	if _, ok := report.Packages[mock.Pkg.Name]; !ok {
+	pkg := From(report.Packages).SingleWith(func(p interface{}) bool {
+		return p.(*Package).Name == mock.Pkg.Name
+	})
+	if pkg == nil {
 		t.Fatalf("Package %s not found in report", mock.Pkg.Name)
 	}
-	pkg := report.Packages[mock.Pkg.Name]
-	for _, fn := range pkg.Functions {
+	for _, fn := range pkg.(*Package).Functions {
 		// Find function
 		mfn := From(mock.Pkg.Functions).SingleWith(func(f interface{}) bool {
 			return f.(*Function).Name == fn.Name
@@ -122,6 +126,43 @@ func TestFunctions(t *testing.T) {
 				f.Coverage,
 				fn.Name,
 			)
+		}
+	}
+}
+
+func TestAccumulatePackage(t *testing.T) {
+	p1_1 := registerPackage("p1")
+	p1_2 := registerPackage("p1")
+	p2 := registerPackage("p2")
+	p3 := registerPackage("p1")
+	registerFunction(p3, "f", "file.go", 0, 1)
+	p4 := registerPackage("p1")
+	registerFunction(p4, "f", "file.go", 1, 2)
+
+	var tests = [...]struct {
+		a, b       *Package
+		expectPass bool
+	}{
+		// Should work: everything is the same.
+		{p1_1, p1_2, true},
+		// Should fail: name is different.
+		{p1_1, p2, false},
+		// Should fail: numbers of functions are different.
+		{p1_1, p3, false},
+		// Should fail: functions are different.
+		{p3, p4, false},
+	}
+
+	for _, test := range tests {
+		err := test.a.Accumulate(test.b)
+		if test.expectPass {
+			if err != nil {
+				t.Error(err)
+			}
+		} else {
+			if err == nil {
+				t.Error("Expected an error")
+			}
 		}
 	}
 }
