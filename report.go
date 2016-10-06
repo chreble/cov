@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"go/parser"
 	"go/token"
+	"os"
 	"os/exec"
 	"sort"
 	"strings"
@@ -80,9 +81,13 @@ func (r *Report) collectPackages() error {
 				log.Debugf("Ignoring test package `%s`", pkg.Name)
 				continue
 			}
-			log.Debugf("package %v", pkg.Name)
+			// Craft package path
+			path := strings.Replace(dir, os.Getenv("GOPATH")+"/src/", "", 1)
+
+			log.Debugf("path %v / package %v", path, pkg.Name)
 			r.addPackage(&Package{
 				Name: pkg.Name,
+				Path: path,
 			})
 		}
 	}
