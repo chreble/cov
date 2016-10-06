@@ -75,6 +75,11 @@ func (r *Report) collectPackages() error {
 			errs = append(errs, err)
 		}
 		for _, pkg := range pkgs {
+			// Ignore test package
+			if strings.HasSuffix(pkg.Name, "_test") {
+				log.Debugf("Ignoring test package `%s`", pkg.Name)
+				continue
+			}
 			log.Debugf("package %v", pkg.Name)
 			r.addPackage(&Package{
 				Name: pkg.Name,

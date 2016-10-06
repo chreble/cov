@@ -28,6 +28,9 @@ func (p *Package) Accumulate(p2 *Package) error {
 	if p.Coverage != p2.Coverage {
 		p.Coverage = p2.Coverage
 	}
+	if p.Path != p2.Path {
+		p.Path = p2.Path
+	}
 	if len(p.Functions) != len(p2.Functions) {
 		return fmt.Errorf("Function counts do not match: %d != %d", len(p.Functions), len(p2.Functions))
 	}
