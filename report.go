@@ -6,10 +6,12 @@
 package cov
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"go/parser"
 	"go/token"
+	"io"
 	"os"
 	"os/exec"
 	"sort"
@@ -24,8 +26,6 @@ import (
 type Report struct {
 	// Packages holds all tested packages
 	Packages []*Package `json:"packages"`
-	// Coverage is the global test coverage percentage
-	Coverage float64 `json:"coverage"`
 }
 
 func (r *Report) parseProfile(profiles []*cover.Profile) error {
@@ -41,22 +41,7 @@ func (r *Report) parseProfile(profiles []*cover.Profile) error {
 		r.addPackage(pkg)
 	}
 
-	r.computeGlobalCoverage()
-
 	return nil
-}
-
-func (r *Report) computeGlobalCoverage() {
-	// Loop on each package and determine coverage and TLOC by package
-	var gcov float64
-	for _, pkg := range r.Packages {
-		gcov += pkg.Coverage
-	}
-
-	// Report the global # of tested LOCs
-	if gcov > 0 {
-		r.Coverage = gcov / float64(len(r.Packages))
-	}
 }
 
 // collectPackages collects ALL packages
@@ -85,10 +70,19 @@ func (r *Report) collectPackages() error {
 			path := strings.Replace(dir, os.Getenv("GOPATH")+"/src/", "", 1)
 
 			log.Debugf("path %v / package %v", path, pkg.Name)
-			r.addPackage(&Package{
+			p := &Package{
 				Name: pkg.Name,
 				Path: path,
-			})
+			}
+			// Count LOCs for each file in the package
+			for fn := range pkg.Files {
+				if strings.HasSuffix(fn, "_test.go") {
+					continue
+				}
+				p.LOC += countLOC(fn)
+			}
+			r.addPackage(p)
+
 		}
 	}
 
@@ -97,6 +91,64 @@ func (r *Report) collectPackages() error {
 	}
 
 	return nil
+}
+
+// countLOC counts lines of code, pull LOC, Comments, assertions
+func countLOC(path string) int {
+	var (
+		loc            int
+		inBlockComment bool
+	)
+
+	f, err := os.Open(path)
+	if err != nil {
+		log.Error(err)
+		return loc
+	}
+	defer f.Close()
+
+	buff := bufio.NewReader(f)
+
+	for {
+		line, isPrefix, err := buff.ReadLine()
+		if err == io.EOF {
+			return loc
+		}
+		// Incomplete line (don't count)
+		if isPrefix == true {
+			continue
+		}
+		// Empty line (don't count)
+		if len(line) == 0 {
+			continue
+		}
+		// Comment (don't count)
+		if strings.Index(strings.TrimSpace(string(line)), "//") == 0 {
+			continue
+		}
+
+		blockCommentStartPos := strings.Index(strings.TrimSpace(string(line)), "/*")
+		blockCommentEndPos := strings.LastIndex(strings.TrimSpace(string(line)), "*/")
+
+		if blockCommentStartPos > -1 {
+			// block was started and not terminated
+			if blockCommentEndPos == -1 || blockCommentStartPos > blockCommentEndPos {
+				inBlockComment = true
+			}
+		}
+		if blockCommentEndPos > -1 {
+			// end of block is found and no new block was started
+			if blockCommentStartPos == -1 || blockCommentEndPos > blockCommentStartPos {
+				inBlockComment = false
+			}
+		}
+
+		if inBlockComment {
+			continue
+		}
+
+		loc++
+	}
 }
 
 // AddPackage adds a package coverage information

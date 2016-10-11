@@ -15,6 +15,8 @@ type Package struct {
 	Path string `json:"path"`
 	// Coverage
 	Coverage float64 `json:"coverage"`
+	// LOC contains the number of lines of code for a given package
+	LOC int `json:"loc"`
 	// Functions is a list of functions registered with this package.
 	Functions []*Function `json:"-"`
 }
