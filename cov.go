@@ -34,20 +34,7 @@ func ConvertRepository(repo string) (*Report, error) {
 		return nil, err
 	}
 
-	return r, nil
-}
-
-// ConvertProfile converts a given profile to a Report struct
-func ConvertProfile(filename string) (*Report, error) {
-	profiles, err := cover.ParseProfiles(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	r := &Report{}
-	if err = r.parseProfile(profiles); err != nil {
-		return nil, err
-	}
+	r.computeGlobalCoverage()
 
 	return r, nil
 }

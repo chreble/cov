@@ -16,8 +16,8 @@ import (
 	"github.com/hotolab/cov"
 )
 
-// RepoCommand prepares a coverage file, converts and outputs
-// to JSON
+// RepoCommand prepares a coverage file
+// converts and outputs to JSON
 func RepoCommand() cli.Command {
 	return cli.Command{
 		Name:  "repo",

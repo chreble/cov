@@ -12,6 +12,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io"
+	"math"
 	"os"
 	"os/exec"
 	"sort"
@@ -20,12 +21,15 @@ import (
 	"golang.org/x/tools/cover"
 
 	log "github.com/Sirupsen/logrus"
+	"simonwaldherr.de/go/golibs/xmath"
 )
 
 // Report contains information about tested packages, functions and statements
 type Report struct {
 	// Packages holds all tested packages
 	Packages []*Package `json:"packages"`
+	// Coverage
+	Coverage float64 `json:"coverage"`
 }
 
 func (r *Report) parseProfile(profiles []*cover.Profile) error {
@@ -82,7 +86,6 @@ func (r *Report) collectPackages() error {
 				p.LOC += countLOC(fn)
 			}
 			r.addPackage(p)
-
 		}
 	}
 
@@ -163,6 +166,21 @@ func (r *Report) addPackage(p *Package) {
 		tail := append([]*Package{p}, (r.Packages)[i:]...)
 		r.Packages = append(head, tail...)
 	}
+}
+
+// computeGlobalCoverage compute the global coverage
+// from all packages coverage, we use the weighted
+// average for that calculating the weight proportionally
+// based on the LOCs
+func (r *Report) computeGlobalCoverage() {
+	var sums, weights []float64
+	for _, pkg := range r.Packages {
+		w := math.Sqrt(float64(pkg.LOC))
+		weights = append(weights, w)
+		sums = append(sums, w*pkg.Coverage)
+	}
+
+	r.Coverage = xmath.Sum(sums) / xmath.Sum(weights)
 }
 
 // packageList returns a list of Go-like files or directories from PWD,

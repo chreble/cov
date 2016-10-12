@@ -43,7 +43,6 @@ func main() {
 
 // AddCommands adds child commands to the root command Cmd.
 func AddCommands() {
-	AddCommand(ProfileCommand())
 	AddCommand(RepoCommand())
 }
 
