@@ -12,7 +12,6 @@ import (
 	"go/parser"
 	"go/token"
 	"io"
-	"math"
 	"os"
 	"os/exec"
 	"sort"
@@ -174,8 +173,16 @@ func (r *Report) addPackage(p *Package) {
 // based on the LOCs
 func (r *Report) computeGlobalCoverage() {
 	var sums, weights []float64
+
+	// Make the SUM of all LOCs
+	var gloc float64
 	for _, pkg := range r.Packages {
-		w := math.Sqrt(float64(pkg.LOC))
+		gloc += float64(pkg.LOC)
+	}
+
+	for _, pkg := range r.Packages {
+		// Weight will be the ratio of {PACKAGE_LOC}/{GLOBAL_PACKAGE_LOC}
+		w := float64(pkg.LOC) / gloc
 		weights = append(weights, w)
 		sums = append(sums, w*pkg.Coverage)
 	}
